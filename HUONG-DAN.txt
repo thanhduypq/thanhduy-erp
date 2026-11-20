@@ -1,0 +1,34 @@
+HƯỚNG DẪN ĐƯA APP "THÀNH DUY ERP" LÊN ĐIỆN THOẠI
+=================================================
+
+A. CẬP NHẬT PHẦN MỀM TRÊN GOOGLE APPS SCRIPT (làm 1 lần)
+ 1. Mở Google Sheet → Tiện ích mở rộng → Apps Script.
+ 2. Thay nội dung 4 tệp bằng 4 tệp trong gói: Code.gs, Index.html, JavaScript.html, Stylesheet.html → Lưu.
+    (Khối "ĐĂNG NHẬP & PHÂN QUYỀN" phải nằm CUỐI CÙNG tệp Code.gs. Nếu dự án có thêm tệp .gs khác,
+     hãy chuyển code của chúng vào trước khối này, hoặc báo lại để được hướng dẫn.)
+ 3. Tải lại Google Sheet → menu "🚗 Thành Duy ERP" → "🔐 Đặt mật khẩu tài khoản ADMIN" → nhập mật khẩu.
+    (Google sẽ hỏi cấp quyền: chọn tài khoản → Nâng cao → Cho phép.)
+ 4. Apps Script → Triển khai → Quản lý các bản triển khai → bút chì:
+      - Thực thi dưới dạng: Tôi (tài khoản chủ)
+      - Người có quyền truy cập: BẤT KỲ AI   ← bắt buộc để mở được trên điện thoại không cần tài khoản Google
+      - Phiên bản: Phiên bản mới → Triển khai. Sao chép link Ứng dụng web (kết thúc bằng /exec).
+ 5. Mở link /exec trên máy tính (đang đăng nhập Google chủ) → vào Thiết lập → "Tài khoản & Phân quyền":
+    chọn Vai trò, tick trang thêm/ẩn, nhập mật khẩu cho từng nhân viên → Lưu.
+
+B. ĐĂNG TRANG APP (thư mục app-dien-thoai) LÊN MẠNG MIỄN PHÍ — GitHub Pages
+ 1. Mở index.html bằng Notepad, dán link /exec vào dòng:  var APP_URL = 'DAN_LINK_EXEC_VAO_DAY';  → Lưu.
+ 2. Tạo tài khoản tại github.com → New repository → tên: thanhduy-erp → Public → Create.
+ 3. Bấm "uploading an existing file" → kéo thả TẤT CẢ tệp trong thư mục app-dien-thoai → Commit changes.
+ 4. Settings → Pages → Branch: main / (root) → Save. Sau 1-2 phút có link dạng:
+      https://<tên-tài-khoản>.github.io/thanhduy-erp/
+ 5. Gửi link này cho nhân viên (Zalo).
+
+C. NHÂN VIÊN CÀI LÊN ĐIỆN THOẠI
+ - Android (Chrome): mở link → bấm "Cài đặt" trên thông báo (hoặc menu ⋮ → "Cài đặt ứng dụng" / "Thêm vào màn hình chính").
+ - iPhone (Safari): mở link → nút Chia sẻ → "Thêm vào MH chính" → Thêm.
+ - Mở biểu tượng "Thành Duy" → đăng nhập Mã NV + mật khẩu do Quản lý cấp.
+
+D. LƯU Ý
+ - Không chia sẻ link /exec và link app ra ngoài công ty.
+ - Đổi mật khẩu hoặc chọn "Khóa" trong Tài khoản & Phân quyền → nhân viên đó bị đăng xuất ngay ở lần thao tác kế tiếp.
+ - Mỗi lần sửa code Apps Script phải "Triển khai → Phiên bản mới" thì app trên điện thoại mới cập nhật (không cần cài lại app).
