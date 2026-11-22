@@ -12,6 +12,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="icon" type="image/png" href="icon-192.png">
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <style>
     :root { --g1:#08684d; --g2:#19b07c; }
     * { box-sizing:border-box; }
@@ -46,6 +47,8 @@
   <script>
     /* ==== CẤU HÌNH: dán link web app Apps Script (kết thúc bằng /exec) vào giữa 2 dấu nháy ==== */
     var APP_URL = 'https://script.google.com/macros/s/AKfycbzK4jdGovWpsWEFX2fJDrNi-x1jHO4Qj3etFdds3YECT5iQxgSmX2Bo_A3mMFvrVMS5/exec';
+    /* ==== THÔNG BÁO ĐIỆN THOẠI: dán OneSignal App ID vào đây (để trống = tắt thông báo đẩy) ==== */
+    var ONESIGNAL_APP_ID = '';
     /* ======================================================================================== */
 
     var frame = document.getElementById('app'), splash = document.getElementById('splash'), msg = document.getElementById('msg');
@@ -69,7 +72,15 @@
       if (!navigator.onLine) {
         showMsg('<b>Không có kết nối mạng.</b><br>Phần mềm cần Internet để tải dữ liệu.<br><button onclick="location.reload()">Thử lại</button>');
       }
-      frame.src = APP_URL;
+      frame.src = appUrlWithLink();
+    }
+    // Mở từ thông báo: ...github.io/xxx/?ch=bk:123 -> mở thẳng hội thoại đó
+    function appUrlWithLink() {
+      try {
+        var ch = new URLSearchParams(location.search).get('ch');
+        if (ch && /^(g|dm|bk):[\w:|.\-]+$/.test(ch)) return APP_URL + (APP_URL.indexOf('?') > -1 ? '&' : '?') + 'ch=' + encodeURIComponent(ch);
+      } catch (e) {}
+      return APP_URL;
     }
     frame.addEventListener('load', function() {
       if (!frame.src) return;
@@ -77,8 +88,59 @@
     });
     // Phần mềm yêu cầu tải lại (đăng xuất) -> nạp lại khung
     window.addEventListener('message', function(e) {
-      if (e && e.data && e.data.type === 'td-erp-reload') { splash.style.display = 'flex'; splash.style.opacity = '1'; frame.src = APP_URL; }
+      if (!e || !e.data || !/(^https:\/\/script\.google\.com$)|(\.googleusercontent\.com$)/.test(e.origin || '')) return;
+      if (e.data.type === 'td-erp-reload') {
+        splash.style.display = 'flex'; splash.style.opacity = '1'; frame.src = APP_URL;
+        pushLogout();
+      }
+      if (e.data.type === 'td-erp-user' && e.data.maNV) pushLogin(String(e.data.maNV).toUpperCase());
+      if (e.data.type === 'td-erp-badge') {
+        try { if (navigator.setAppBadge) { if (e.data.count > 0) navigator.setAppBadge(e.data.count); else navigator.clearAppBadge(); } } catch (x) {}
+      }
     });
+
+    /* ---- Thông báo đẩy (OneSignal) ---- */
+    var pushUser = '';
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    if (ONESIGNAL_APP_ID) {
+      var base = location.pathname.replace(/[^\/]*$/, '');             // vd: /thanhduy-erp/
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: ONESIGNAL_APP_ID,
+          serviceWorkerPath: base.replace(/^\//, '') + 'push/onesignal/OneSignalSDKWorker.js',
+          serviceWorkerParam: { scope: base + 'push/onesignal/' },
+          notifyButton: { enable: false }
+        });
+      });
+    }
+    function pushLogin(code) {
+      if (!ONESIGNAL_APP_ID || !code) return;
+      pushUser = code;
+      OneSignalDeferred.push(async function(OneSignal) {
+        try { await OneSignal.login(code); } catch (x) {}
+        if (!OneSignal.Notifications.isPushSupported()) {
+          if (isIOS && !standalone) setTimeout(function() {
+            showMsg('<b>Muốn nhận thông báo tin nhắn / lịch mới trên iPhone?</b><br>Cần cài app lên màn hình chính trước: bấm <b>Chia sẻ</b> → <b>“Thêm vào MH chính”</b>, rồi mở app từ biểu tượng.<br>' +
+                    '<button onclick="hideMsg()">Đã hiểu</button>');
+          }, 3000);
+          return;
+        }
+        var later = 0; try { later = +localStorage.getItem('TD_PUSH_LATER') || 0; } catch (x) {}
+        if (!OneSignal.Notifications.permission && Date.now() - later > 3 * 86400000) {
+          setTimeout(function() {
+            showMsg('<b>🔔 Bật thông báo?</b><br>Nhận tin nhắn, lịch mới, tài xế báo kết thúc tour… ngay cả khi đang tắt app.<br>' +
+                    '<button id="pushOn">Bật thông báo</button><button class="ghost" id="pushLater">Để sau</button>');
+            document.getElementById('pushOn').onclick = function() { hideMsg(); OneSignal.Notifications.requestPermission(); };
+            document.getElementById('pushLater').onclick = function() { hideMsg(); try { localStorage.setItem('TD_PUSH_LATER', String(Date.now())); } catch (x) {} };
+          }, 2500);
+        }
+      });
+    }
+    function pushLogout() {
+      if (!ONESIGNAL_APP_ID || !pushUser) return;
+      pushUser = '';
+      OneSignalDeferred.push(async function(OneSignal) { try { await OneSignal.logout(); } catch (x) {} });
+    }
     window.addEventListener('online', function() { hideMsg(); });
     window.addEventListener('offline', function() { showMsg('<b>Mất kết nối mạng.</b> Dữ liệu sẽ cập nhật lại khi có mạng.'); });
 

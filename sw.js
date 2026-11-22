@@ -1,5 +1,5 @@
 // Service worker: lưu sẵn khung app (biểu tượng, trang mở đầu) để mở nhanh; dữ liệu luôn lấy mới từ Google
-const CACHE = 'thanhduy-erp-v1';
+const CACHE = 'thanhduy-erp-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 self.addEventListener('install', function(e) { e.waitUntil(caches.open(CACHE).then(function(c) { return c.addAll(SHELL); })); self.skipWaiting(); });
 self.addEventListener('activate', function(e) {
