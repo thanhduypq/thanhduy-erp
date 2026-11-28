@@ -166,5 +166,29 @@
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function() {});
     load();
   </script>
+  <script>
+    /* ==== GIỮ ĐĂNG NHẬP TRÊN IPHONE (bản 28/11) ====
+       iPhone xóa bộ nhớ của phần mềm chạy bên trong khung mỗi khi tắt / cập nhật app,
+       nên app ngoài này giữ hộ mã đăng nhập và trả lại khi phần mềm mở lên.
+       Chỉ trao mã cho đúng phần mềm Google Apps Script đang chạy bên trong khung. */
+    (function () {
+      var TK = 'TD_ERP_TK', US = 'TD_ERP_USER';
+      var okOrigin = /^https:\/\/[a-z0-9-]+-script\.googleusercontent\.com$/;
+      window.addEventListener('message', function (e) {
+        var d = e && e.data;
+        if (!d || !okOrigin.test(e.origin || '')) return;
+        if (d.type === 'td-erp-token-save') {
+          try {
+            if (d.token) { localStorage.setItem(TK, String(d.token)); if (d.user) localStorage.setItem(US, JSON.stringify(d.user)); }
+            else { localStorage.removeItem(TK); localStorage.removeItem(US); }
+          } catch (x) {}
+        } else if (d.type === 'td-erp-need-token' && e.source) {
+          var tk = '', u = null;
+          try { tk = localStorage.getItem(TK) || ''; u = JSON.parse(localStorage.getItem(US) || 'null'); } catch (x) {}
+          try { e.source.postMessage({ type: 'td-erp-token', token: tk, user: u }, e.origin); } catch (x) {}
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
